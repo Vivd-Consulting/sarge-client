@@ -2,6 +2,8 @@
     <body>
       <p>Test</p>
       <a id="mylink" href="https://google.ca?def=123">My link</a>
+      <button id="addToCart">Add to cart</button>
+      <button id="purchase">Purchase</button>
     </body>
     <script src="sarge.js"></script>
     <script>
@@ -12,9 +14,18 @@
         consol,
         cookieParams,
         localStore,
-        localStoreParams
-      } = sarge({ prod: false });
+        localStoreParams,
+        events
+      } = sarge({ id: 'dailytreats', prod: false });
       
       localStoreParams()
+
+      document.getElementById('addToCart').onclick = function() {
+        events.atc();
+      };
+
+      document.getElementById('purchase').onclick = function() {
+        events.purchase({ price: 10, currency: 'USD' })
+      };
     </script>
 </html>

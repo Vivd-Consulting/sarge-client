@@ -1,4 +1,4 @@
-const sarge = ({ prod = true }) => {
+const sarge = ({ id, prod = true }) => {
   const _consol = (level, msg) => {
     const isProd = prod === true;
     if (!isProd) {
@@ -30,29 +30,34 @@ const sarge = ({ prod = true }) => {
 
   // "GET/POST", "[{ name, value }]", "{my: 'json'}", "log/whatever"
   const _net = ({ method, params = [{}], json, func }) => {
-    const uri = ""; // TODO: Our sarge endpoint
+    const uri = prod ? "https://..." : "http://localhost:3000";
 
-    const url = paramFormatter(`${uri}/${func}`, params);
+    const url = paramFormatter(`${uri}/${func}`, [
+      { name: "id", value: id },
+      ...params,
+    ]);
 
     const options = {
       method,
       mode: "cors",
       cache: "no-cache",
-      credentials: "include",
     };
 
     if (json) {
-      options.data = JSON.stringify(json);
+      options.body = JSON.stringify(json);
       options.headers = {
         "Content-Type": "application/json",
       };
     }
 
+    console.log(url);
+    console.log(options);
+
     // TODO: Consider fallback GET:
     // (new Image()).src = url
 
     // Make fetch without awaiting the response
-    fetch(url);
+    fetch(url, options);
   };
 
   const net = {
@@ -81,7 +86,6 @@ const sarge = ({ prod = true }) => {
       );
     } else if (_method === "SET") {
       document.cookie = `${name}=${value}; expires=${expiry.toUTCString()}`;
-      //   document.cookie = `${name}=${value}; expires=${expiry.toUTCString()}`;
     }
   };
 
@@ -134,7 +138,7 @@ const sarge = ({ prod = true }) => {
   // Grabs the sarge params from the URL and cookie them
   const localStoreParams = () => {
     let existingExp = localStore.get("sarge_exp");
-    if (existingExp) {
+    if (prod && existingExp) {
       existingExp = new Date(existingExp);
       // If our expiry date is in the future, count this as a latent and dont overwrite our data
       if (existingExp > Date.now()) {
@@ -151,6 +155,31 @@ const sarge = ({ prod = true }) => {
     localStore.set("sarge_exp", getDate(28));
   };
 
+  const getLocalStores = () => {
+    return {
+      aff: localStore.get("sarge_aff"),
+      ref: localStore.get("sarge_ref"),
+      exp: localStore.get("sarge_exp"),
+    };
+  };
+
+  const events = {
+    atc: (params) => {
+      const date = new Date().toISOString();
+      return net.post({
+        func: "atc",
+        json: { ...getLocalStores(), ...params, date },
+      });
+    },
+    purchase: (params) => {
+      const date = new Date().toISOString();
+      return net.post({
+        func: "purchase",
+        json: { ...getLocalStores(), ...params, date },
+      });
+    },
+  };
+
   return {
     cta,
     net,
@@ -159,5 +188,7 @@ const sarge = ({ prod = true }) => {
     cookieParams,
     localStore,
     localStoreParams,
+    getLocalStores,
+    events,
   };
 };
