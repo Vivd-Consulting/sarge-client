@@ -154,7 +154,7 @@ const sarge = ({ id, prod = true }) => {
 
     sarge_ref && localStore.set("sarge_ref", sarge_ref);
     sarge_aff && localStore.set("sarge_aff", sarge_aff);
-    localStore.set("sarge_exp", getDate(28));
+    (sarge_ref || sarge_aff) && localStore.set("sarge_exp", getDate(28));
   };
 
   const getLocalStores = () => {
