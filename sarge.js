@@ -30,7 +30,9 @@ const sarge = ({ id, prod = true }) => {
 
   // "GET/POST", "[{ name, value }]", "{my: 'json'}", "log/whatever"
   const _net = ({ method, params = [{}], json, func }) => {
-    const uri = prod ? "https://..." : "http://localhost:3000";
+    const uri = prod
+      ? "https://us-west2-sarge-308823.cloudfunctions.net/sarge-api"
+      : "http://localhost:3000";
 
     const url = paramFormatter(`${uri}/${func}`, [
       { name: "id", value: id },

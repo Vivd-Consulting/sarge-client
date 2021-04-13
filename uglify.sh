@@ -1,2 +1,2 @@
 #!/bin/bash
-uglifyjs sarge.js > sarge.min.js
+uglifyjs sarge.js > dist/sarge.min.js
