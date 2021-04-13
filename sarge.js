@@ -101,6 +101,7 @@ const sarge = ({ id, prod = true }) => {
     set: (name, value) => {
       window.localStorage.setItem(name, value);
     },
+    remove: (name) => window.localStorage.removeItem(name),
   };
 
   // elm, [{name, value}]
@@ -157,6 +158,12 @@ const sarge = ({ id, prod = true }) => {
     (sarge_ref || sarge_aff) && localStore.set("sarge_exp", getDate(28));
   };
 
+  const cleanLocalStores = () => {
+    localStore.remove("sarge_ref");
+    localStore.remove("sarge_aff");
+    localStore.remove("sarge_exp");
+  };
+
   const getLocalStores = () => {
     return {
       aff: localStore.get("sarge_aff"),
@@ -174,6 +181,9 @@ const sarge = ({ id, prod = true }) => {
       });
     },
     purchase: (params) => {
+      // Remove local stores for next session
+      cleanLocalStores();
+
       const date = new Date().toISOString();
       return net.post({
         func: "purchase",
@@ -191,6 +201,7 @@ const sarge = ({ id, prod = true }) => {
     localStore,
     localStoreParams,
     getLocalStores,
+    cleanLocalStores,
     events,
   };
 };
