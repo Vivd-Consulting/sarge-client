@@ -1,4 +1,12 @@
-const sarge = ({ id, prod = true }) => {
+const _sarge = (() => {
+  let id = null;
+  let prod = true;
+
+  const init = (_id, _prod) => {
+    id = _id;
+    prod = _prod;
+  };
+
   const _consol = (level, msg) => {
     const isProd = prod === true;
     if (!isProd) {
@@ -31,7 +39,7 @@ const sarge = ({ id, prod = true }) => {
   // "GET/POST", "[{ name, value }]", "{my: 'json'}", "log/whatever"
   const _net = ({ method, params = [{}], json, func }) => {
     const uri = prod
-      ? "https://us-west2-sarge-308823.cloudfunctions.net/sarge-api"
+      ? "https://us-west2-sarge-tracking.cloudfunctions.net/sarge-blake"
       : "http://localhost:3000";
 
     const url = paramFormatter(`${uri}/${func}`, [
@@ -51,9 +59,6 @@ const sarge = ({ id, prod = true }) => {
         "Content-Type": "application/json",
       };
     }
-
-    console.log(url);
-    console.log(options);
 
     // TODO: Consider fallback GET:
     // (new Image()).src = url
@@ -193,6 +198,7 @@ const sarge = ({ id, prod = true }) => {
   };
 
   return {
+    init,
     cta,
     net,
     consol,
@@ -204,4 +210,21 @@ const sarge = ({ id, prod = true }) => {
     cleanLocalStores,
     events,
   };
+})();
+
+window._invoke = (args) => {
+  const arr = Array.prototype.slice.call(args);
+  const fn = _sarge[arr[0]];
+
+  if (typeof fn === "function") {
+    const params = arr.slice(1, arr.length);
+    return fn(params);
+  } else {
+    const params = arr.slice(2, arr.length);
+    return fn[arr[1]](params);
+  }
 };
+
+for (const call of window._sarge.queue) {
+  window._invoke(call);
+}
