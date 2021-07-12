@@ -5,28 +5,17 @@
       <button id="addToCart">Add to cart</button>
       <button id="purchase">Purchase</button>
     </body>
+    <!-- Sarge Pixel Code -->
     <script>
-      !function(w, d, src, n, t, s) {
-        if (w.sarge) return;
-        n = w.sarge = function() {
-          w._invoke ? w._invoke(arguments) : n.queue.push(arguments)
-        }
-        if (!w._sarge) w._sarge = n;
-
-        n.push = n;
-        n.loaded = !0;
-        n.version = '2.0';
-        n.queue = [];
-
-        t = d.createElement('script')
-        t.async = true
-        t.src = src
-        
-        s = d.getElementsByTagName('script')[0]
-        s.parentNode.insertBefore(t, s)
-      }(window, document, 'sarge.js')
-      
-      sarge('init', 1, false)
-      sarge('events', 'atc', { abc: 123 });
+      !function(w,d,src,n,t,s)
+      {if(w.sarge)return;n=w.sarge=function(){w._invoke?
+      w._invoke(arguments):n.queue.push(arguments)};
+      if(!w._sarge)w._sarge=n;n.push=n;n.loaded=!0;
+      n.version="2.0";n.queue=[];t=d.createElement("script");
+      t.async=true;t.src=src;s=d.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(t,s)}(window,document,"sarge.js");
+      sarge('init', 1);
+      sarge('events', 'purchase');
     </script>
+    <!-- End Sarge Pixel Code -->
 </html>

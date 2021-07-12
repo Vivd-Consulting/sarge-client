@@ -2,7 +2,7 @@ const _sarge = (() => {
   let id = null;
   let prod = true;
 
-  const init = (_id, _prod) => {
+  const init = ([_id, _prod]) => {
     id = _id;
     prod = _prod;
   };
@@ -178,36 +178,27 @@ const _sarge = (() => {
   };
 
   const events = {
-    atc: (params) => {
+    atc: () => {
       const date = new Date().toISOString();
       return net.post({
         func: "atc",
-        json: { ...getLocalStores(), ...params, date },
+        json: { ...getLocalStores(), date },
       });
     },
-    purchase: (params) => {
+    purchase: () => {
       // Remove local stores for next session
       cleanLocalStores();
 
       const date = new Date().toISOString();
       return net.post({
         func: "purchase",
-        json: { ...getLocalStores(), ...params, date },
+        json: { ...getLocalStores(), date },
       });
     },
   };
 
   return {
     init,
-    cta,
-    net,
-    consol,
-    cookie,
-    cookieParams,
-    localStore,
-    localStoreParams,
-    getLocalStores,
-    cleanLocalStores,
     events,
   };
 })();
@@ -218,6 +209,7 @@ window._invoke = (args) => {
 
   if (typeof fn === "function") {
     const params = arr.slice(1, arr.length);
+    console.log(params);
     return fn(params);
   } else {
     const params = arr.slice(2, arr.length);
