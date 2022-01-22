@@ -1,10 +1,14 @@
 const _sarge = (() => {
   let id = null;
+  let expiryDays = 28;
   let prod = true;
 
-  const init = ([_id, _prod]) => {
+  const init = ([_id, _prod, _expiryDays]) => {
     id = _id;
-    prod = _prod;
+    prod = _prod || true;
+    expiryDays = _expiryDays || 28;
+
+    localStoreParams();
   };
 
   const _consol = (level, msg) => {
@@ -36,41 +40,24 @@ const _sarge = (() => {
     return url.href;
   };
 
-  // "GET/POST", "[{ name, value }]", "{my: 'json'}", "log/whatever"
-  const _net = ({ method, params = [{}], json, func }) => {
+  // "[{ name, value }]", "log/whatever"
+  const _net = ({ params = [{}], func }) => {
     const uri = prod
       ? "https://us-west2-sarge-tracking.cloudfunctions.net/sarge-blake"
       : "http://localhost:3000";
 
     const url = paramFormatter(`${uri}/${func}`, [
       { name: "id", value: id },
-      ...params,
+      ...Object.keys(params).map((name) => ({ name, value: params[name] })),
     ]);
 
-    const options = {
-      method,
-      mode: "cors",
-      cache: "no-cache",
-    };
-
-    if (json) {
-      options.body = JSON.stringify(json);
-      options.headers = {
-        "Content-Type": "application/json",
-      };
-    }
-
-    // TODO: Consider fallback GET:
-    // (new Image()).src = url
-
-    // Make fetch without awaiting the response
-    fetch(url, options);
+    new Image().src = url;
   };
 
   const net = {
-    get: ({ func, params }) => _net({ method: "GET", params, func }),
-    post: ({ func, params, json }) =>
-      _net({ method: "POST", params, json, func }),
+    get: ({ func, params }) => _net({ params, func }),
+    // post: ({ func, params, json }) =>
+    //   _net({ method: "POST", params, json, func }),
   };
 
   const getDate = (addDays = 0) =>
@@ -79,8 +66,8 @@ const _sarge = (() => {
   const _cookie = ({ method = "GET", name, value }) => {
     const _method = method.toUpperCase();
 
-    // Set our expiry to be 28 days from now (FB captures up to 28d)
-    const expiry = getDate(28);
+    // Set our expiry to be x days from now (FB captures up to 28d)
+    const expiry = getDate(expiryDays);
 
     if (_method === "GET") {
       return (
@@ -148,7 +135,7 @@ const _sarge = (() => {
     let existingExp = localStore.get("sarge_exp");
     if (prod && existingExp) {
       existingExp = new Date(existingExp);
-      // If our expiry date is in the future, count this as a latent and dont overwrite our data
+      // If our expiry date is in the future, count this as a latent and shouldn't overwrite our data
       if (existingExp > Date.now()) {
         return;
       }
@@ -160,7 +147,7 @@ const _sarge = (() => {
 
     sarge_ref && localStore.set("sarge_ref", sarge_ref);
     sarge_aff && localStore.set("sarge_aff", sarge_aff);
-    (sarge_ref || sarge_aff) && localStore.set("sarge_exp", getDate(28));
+    (sarge_ref || sarge_aff) && localStore.set("sarge_exp", getDate(expiryDays));
   };
 
   const cleanLocalStores = () => {
@@ -178,21 +165,30 @@ const _sarge = (() => {
   };
 
   const events = {
+    pageView: () => {
+      const date = new Date().toISOString();
+      return net.get({
+        func: "pageView",
+        params: { ...getLocalStores(), date },
+      });
+    },
     atc: () => {
       const date = new Date().toISOString();
-      return net.post({
+      return net.get({
         func: "atc",
-        json: { ...getLocalStores(), date },
+        params: { ...getLocalStores(), date },
       });
     },
     purchase: () => {
+      const localStores = getLocalStores();
+
       // Remove local stores for next session
       cleanLocalStores();
 
       const date = new Date().toISOString();
-      return net.post({
+      return net.get({
         func: "purchase",
-        json: { ...getLocalStores(), date },
+        params: { ...localStores, date },
       });
     },
   };
@@ -209,7 +205,6 @@ window._invoke = (args) => {
 
   if (typeof fn === "function") {
     const params = arr.slice(1, arr.length);
-    console.log(params);
     return fn(params);
   } else {
     const params = arr.slice(2, arr.length);
