@@ -29,17 +29,11 @@ Now in another script block, you can call events
 
 ```html
 <script>
-  sarge('init', 1);
-</script>
-```
-
-Now you can call events:
-
-```html
-<script>
   sarge('pageView');
   sarge('atc');
+
   // purchase will clear sarge_ref, and sarge_aff params for next session
   sarge('purchase');
 </script>
 ```
+

@@ -3,10 +3,10 @@ const _sarge = (() => {
   let expiryDays = 28;
   let prod = true;
 
-  const init = ([_id, _prod, _expiryDays]) => {
+  const init = ([_id, _expiryDays, _prod]) => {
     id = _id;
-    prod = _prod || true;
     expiryDays = _expiryDays || 28;
+    prod = _prod === undefined ? true : false;
 
     localStoreParams();
   };
@@ -43,8 +43,8 @@ const _sarge = (() => {
   // "[{ name, value }]", "log/whatever"
   const _net = ({ params = [{}], func }) => {
     const uri = prod
-      ? "https://us-west2-sarge-tracking.cloudfunctions.net/sarge-blake"
-      : "http://localhost:3000";
+      ? "https://live.sarge.io/api/v1"
+      : "http://localhost:49828";
 
     const url = paramFormatter(`${uri}/${func}`, [
       { name: "id", value: id },
@@ -165,18 +165,18 @@ const _sarge = (() => {
   };
 
   const events = {
-    pageView: () => {
-      const date = new Date().toISOString();
+    pageView: (custom) => {
+      const date = new Date().toDateString();
       return net.get({
         func: "pageView",
-        params: { ...getLocalStores(), date },
+        params: { ...getLocalStores(), ...custom, date },
       });
     },
     atc: () => {
-      const date = new Date().toISOString();
+      const date = new Date().toDateString();
       return net.get({
         func: "atc",
-        params: { ...getLocalStores(), date },
+        params: { ...getLocalStores(), ...custom, date },
       });
     },
     purchase: () => {
@@ -185,10 +185,10 @@ const _sarge = (() => {
       // Remove local stores for next session
       cleanLocalStores();
 
-      const date = new Date().toISOString();
+      const date = new Date().toDateString();
       return net.get({
         func: "purchase",
-        params: { ...localStores, date },
+        params: { ...localStores, ...custom, date },
       });
     },
   };

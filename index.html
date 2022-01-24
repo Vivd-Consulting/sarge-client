@@ -14,8 +14,10 @@
       n.version="2.0";n.queue=[];t=d.createElement("script");
       t.async=true;t.src=src;s=d.getElementsByTagName("script")[0];
       s.parentNode.insertBefore(t,s)}(window,document,"sarge.js");
-      sarge('init', 1);
-      sarge('events', 'purchase');
+
+      sarge('init', 1, false);
+      sarge('events', 'pageView');
+      sarge('events', 'purchase', { 'currency': "USD" });
     </script>
     <!-- End Sarge Pixel Code -->
 </html>
