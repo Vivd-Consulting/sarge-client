@@ -11,19 +11,6 @@ const _sarge = (() => {
     localStoreParams();
   };
 
-  const _consol = (level, msg) => {
-    const isProd = prod === true;
-    if (!isProd) {
-      console[level](msg);
-    }
-  };
-
-  const consol = {
-    log: (msg) => _consol("log", msg),
-    warn: (msg) => _consol("warn", msg),
-    error: (msg) => _consol("error", msg),
-  };
-
   // params = "[{ name, value }]"
   const paramFormatter = (url, params = [{}]) => {
     url = new URL(url);
@@ -55,38 +42,11 @@ const _sarge = (() => {
   };
 
   const net = {
-    get: ({ func, params }) => _net({ params, func }),
-    // post: ({ func, params, json }) =>
-    //   _net({ method: "POST", params, json, func }),
+    get: ({ func, params }) => _net({ params, func })
   };
 
   const getDate = (addDays = 0) =>
     new Date(Date.now() + addDays * 24 * 60 * 60 * 1000);
-
-  const _cookie = ({ method = "GET", name, value }) => {
-    const _method = method.toUpperCase();
-
-    // Set our expiry to be x days from now (FB captures up to 28d)
-    const expiry = getDate(expiryDays);
-
-    if (_method === "GET") {
-      return (
-        document.cookie &&
-        document.cookie.length > 0 &&
-        document.cookie
-          .split("; ")
-          .find((row) => row.startsWith(`${name}=`))
-          .split("=")[1]
-      );
-    } else if (_method === "SET") {
-      document.cookie = `${name}=${value}; expires=${expiry.toUTCString()}`;
-    }
-  };
-
-  const cookie = {
-    get: (name) => _cookie({ method: "GET", name }),
-    set: (name, value) => _cookie({ method: "SET", name, value }),
-  };
 
   const localStore = {
     get: (name) => window.localStorage.getItem(name),
@@ -121,21 +81,14 @@ const _sarge = (() => {
   };
 
   // Grabs the sarge params from the URL and cookie them
-  const cookieParams = () => {
-    const params = new URLSearchParams(window.location.search);
-    const sarge_ref = params.get("sarge_ref");
-    const sarge_aff = params.get("sarge_aff");
-
-    sarge_ref && cookie.set("sarge_ref", sarge_ref);
-    sarge_aff && cookie.set("sarge_aff", sarge_aff);
-  };
-
-  // Grabs the sarge params from the URL and cookie them
   const localStoreParams = () => {
+    // Always give us a new session
+    localStore.set("sarge_sess", crypto.randomUUID());
+
     let existingExp = localStore.get("sarge_exp");
     if (prod && existingExp) {
       existingExp = new Date(existingExp);
-      // If our expiry date is in the future, count this as a latent and shouldn't overwrite our data
+      // If our expiry date is in the future, count this as a latent and shouldn't overwrite our old sarge data
       if (existingExp > Date.now()) {
         return;
       }
@@ -147,13 +100,17 @@ const _sarge = (() => {
 
     sarge_ref && localStore.set("sarge_ref", sarge_ref);
     sarge_aff && localStore.set("sarge_aff", sarge_aff);
-    (sarge_ref || sarge_aff) && localStore.set("sarge_exp", getDate(expiryDays));
+
+    localStore.set("sarge_exp", getDate(expiryDays));
+    localStore.set("sarge_user", crypto.randomUUID());
   };
 
   const cleanLocalStores = () => {
     localStore.remove("sarge_ref");
     localStore.remove("sarge_aff");
     localStore.remove("sarge_exp");
+    localStore.remove("sarge_sess");
+    localStore.remove("sarge_user");
   };
 
   const getLocalStores = () => {
@@ -161,41 +118,40 @@ const _sarge = (() => {
       aff: localStore.get("sarge_aff"),
       ref: localStore.get("sarge_ref"),
       exp: localStore.get("sarge_exp"),
+      sess: localStore.get("sarge_sess"),
+      user: localStore.get("sarge_user"),
     };
   };
 
-  const events = {
-    pageView: (custom) => {
-      const date = new Date().toDateString();
-      return net.get({
-        func: "pageView",
-        params: { ...getLocalStores(), ...custom, date },
-      });
-    },
-    atc: () => {
-      const date = new Date().toDateString();
-      return net.get({
-        func: "atc",
-        params: { ...getLocalStores(), ...custom, date },
-      });
-    },
-    purchase: () => {
-      const localStores = getLocalStores();
+  const buildEvent = (func, [custom], shouldCleanLocalStores) => {
+    const date = new Date().toDateString();
+    const params = { ...getLocalStores(), date };
 
-      // Remove local stores for next session
+    if (custom) {
+      params.custom = JSON.stringify(custom);
+    }
+
+    if (shouldCleanLocalStores) {
       cleanLocalStores();
+    }
 
-      const date = new Date().toDateString();
-      return net.get({
-        func: "purchase",
-        params: { ...localStores, ...custom, date },
-      });
-    },
+    return net.get({
+      func,
+      params
+    });
+  }
+
+  const events = {
+    pageView: (custom) => buildEvent("pageView", custom),
+    atc: (custom) => buildEvent("atc", custom),
+    partialLead: (custom) => buildEvent("partialLead", custom),
+    purchase: (custom) => buildEvent("purchase", custom, true),
+    lead: (custom) => buildEvent("lead", custom, true)
   };
 
   return {
     init,
-    events,
+    ...events,
   };
 })();
 
