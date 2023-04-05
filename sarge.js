@@ -43,7 +43,7 @@ const _sarge = (() => {
   // "[{ name, value }]", "log/whatever"
   const _net = ({ params = [{}], func }) => {
     const uri = prod
-      ? "https://live.sarge.io/api/v1"
+      ? "https://white-dawn-6379.fly.dev"
       : "http://localhost:49828";
 
     const url = paramFormatter(`${uri}/${func}`, [
