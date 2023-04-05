@@ -56,30 +56,6 @@ const _sarge = (() => {
     remove: (name) => window.localStorage.removeItem(name),
   };
 
-  // elm, [{name, value}]
-  const _ctaAppend = (elm, params = [{}]) => {
-    const href = paramFormatter(elm.href, params);
-    elm.href = href;
-
-    return elm;
-  };
-
-  const cta = {
-    append: (query, params) => {
-      const elm = document.querySelector(query);
-      return _ctaAppend(elm, params);
-    },
-    appendAll: (query, params) => {
-      const results = [];
-      const elms = document.querySelectorAll(query);
-      for (const elm of elms) {
-        result.push(_ctaAppend(elm, params));
-      }
-
-      return results;
-    },
-  };
-
   // Grabs the sarge params from the URL and cookie them
   const localStoreParams = () => {
     // Always give us a new session
@@ -98,8 +74,13 @@ const _sarge = (() => {
     const sarge_ref = params.get("sarge_ref");
     const sarge_aff = params.get("sarge_aff");
 
-    sarge_ref && localStore.set("sarge_ref", sarge_ref);
-    sarge_aff && localStore.set("sarge_aff", sarge_aff);
+    if (sarge_ref) {
+      localStore.set("sarge_ref", sarge_ref);
+    }
+
+    if (sarge_aff) {
+      localStore.set("sarge_aff", sarge_aff);
+    }
 
     localStore.set("sarge_exp", getDate(expiryDays));
     localStore.set("sarge_user", crypto.randomUUID());
@@ -124,7 +105,7 @@ const _sarge = (() => {
   };
 
   const buildEvent = (func, [custom], shouldCleanLocalStores) => {
-    const date = new Date().toDateString();
+    const date = new Date().getTime();
     const params = { ...getLocalStores(), date };
 
     if (custom) {
